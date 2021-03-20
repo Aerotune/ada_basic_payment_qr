@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+<head>
+<title>Pay with ADA</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<script type="text/javascript" src="dependencies/jquery.min.js"></script>
+<script type="text/javascript" src="dependencies/davidshimjs-qrcodejs/qrcode.js"></script>
+<link rel="stylesheet" href="dependencies/milligram-1.4.1/dist/milligram.min.css" />
+<style>
+	input.error {
+		border-color: #aa2732;
+	}
+	input.error:focus {
+		border-color: #7145b9;
+	}
+	</style>
+</head>
+<body>
+<div class="container">
+	<form>
+		<fieldset>
+			<label for="receiver">Receiver Address:</label>
+			<input id="receiver" type="text" placeholder="addr1...">
+			<label for="paymentAmount">Amount in ADA:</label>
+			<input id="paymentAmount" type="text" placeholder="1.0">
+		</fieldset>
+		<h1 id="paymentHeader" style="text-align: center;"></h1>
+		<h5 id="receiverText" style="text-align: center;"></h5>
+		<div id="qrcode" style="max-width: 300px; max-height: 300px; margin: 0 auto;"></div>
+	</form>
+</div>
+
+<script type="text/javascript">
+var qrcode = new QRCode(document.getElementById("qrcode"), {
+	width: 300,
+	height: 300
+});
+
+function parseReceiver(rawValue) {
+	return rawValue;
+}
+
+function parsePaymentAmount(rawValue) {
+	var match = String(rawValue).match(/\d+(\.\d+)?/);
+	if (match) {
+		return parseFloat(match.join());
+	} else {
+		return null;
+	}
+
+}
+
+function makeQRCode(receiver, paymentAmount) {
+	if (!paymentAmount || !receiver) {
+		qrcode.clear();
+		$("#paymentHeader").html("");
+		$("#receiverText").html("");
+		return;
+	}
+	$("#paymentHeader").html(`${paymentAmount} ADA`);
+	let receiverText = receiver.substr(0,10) + "..." + receiver.substr(-10,10)
+	$("#receiverText").html(receiverText);
+	qrcode.makeCode(`web+cardano:${receiver}?amount=${paymentAmount}`);
+}
+
+function submitForm() {
+	let receiver 			= parseReceiver(document.getElementById("receiver").value);
+	if (receiver) {
+		$("#receiver").removeClass("error");
+	} else {
+		$("#receiver").addClass("error");
+	}
+	let paymentAmount = parsePaymentAmount(document.getElementById("paymentAmount").value);
+	if (paymentAmount) {
+		$("#paymentAmount").removeClass("error");
+	} else {
+		$("#paymentAmount").addClass("error");
+	}
+	makeQRCode(receiver, paymentAmount)
+}
+
+$("#paymentAmount").
+	on("blur", submitForm).
+	on("keydown", function (e) {
+		if (e.keyCode == 13) {
+			submitForm();
+			$("#paymentAmount").blur();
+		}
+	});
+
+$("#receiver").
+	on("blur", submitForm).
+	on("keydown", function (e) {
+		if (e.keyCode == 13) {
+			$("#paymentAmount").focus();
+		}
+	});
+</script>
+</body>
